@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Microsoft.Extensions.AI;
 using OpenAI.RealtimeConversation;
 using Realtime.Components;
 
@@ -28,6 +29,14 @@ public class ConversationManager(RealtimeConversationClient client) : IDisposabl
             Instructions = prompt,
             Voice = ConversationVoice.Shimmer,
         };
+        var memoryContext = new MemoryContext(addMessageAsync);
+        var checkMemoryTool = AIFunctionFactory.Create(memoryContext.CheckMemory);
+        var setMemoryTool = AIFunctionFactory.Create(memoryContext.SetMemory);
+        List<AIFunction> tools = [checkMemoryTool, setMemoryTool];
+        foreach (var tool in tools)
+        {
+            sessionOptions.Tools.Add(tool.ToConversationFunctionTool());
+        }
 
         session = await client.StartConversationSessionAsync();
         await session.ConfigureSessionAsync(sessionOptions);
@@ -69,6 +78,7 @@ public class ConversationManager(RealtimeConversationClient client) : IDisposabl
                     outputTranscription.Clear();
                     break;
             }
+            await session.HandleToolCallsAsync(update, tools);
         }
     }
 
