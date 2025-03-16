@@ -15,7 +15,8 @@ var openAiClient = new AzureOpenAIClient(
 // Or for OpenAI Platform:
 // var openAiClient = new OpenAI.OpenAIClient(builder.Configuration["AI:Key"]!);
 
-// TODO: Register RealtimeConversationClient in DI
+var realtimeClient = openAiClient.GetRealtimeConversationClient("gpt-4o-realtime-preview"); // Update the model name if your deployment is different
+builder.Services.AddSingleton(realtimeClient);
 
 var app = builder.Build();
 
