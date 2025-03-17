@@ -30,9 +30,11 @@ public class ConversationManager(RealtimeConversationClient client) : IDisposabl
             Voice = ConversationVoice.Shimmer,
         };
         var memoryContext = new MemoryContext(addMessageAsync);
-        var checkMemoryTool = AIFunctionFactory.Create(memoryContext.CheckMemory);
-        var setMemoryTool = AIFunctionFactory.Create(memoryContext.SetMemory);
-        List<AIFunction> tools = [checkMemoryTool, setMemoryTool];
+        memoryContext.TryLoadMemories();
+        var checkMemoryTool = AIFunctionFactory.Create(memoryContext.RetrieveMemory);
+        var setMemoryTool = AIFunctionFactory.Create(memoryContext.SetReminder);
+        var addNoteTool = AIFunctionFactory.Create(memoryContext.AddNote);
+        List<AIFunction> tools = [checkMemoryTool, setMemoryTool, addNoteTool];
         foreach (var tool in tools)
         {
             sessionOptions.Tools.Add(tool.ToConversationFunctionTool());
