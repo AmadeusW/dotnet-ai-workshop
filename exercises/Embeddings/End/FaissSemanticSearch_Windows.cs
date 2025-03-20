@@ -69,6 +69,33 @@ public class FaissSemanticSearch_Windows
         index.Save(filename);
         return index;
     }
+
+    // TODO: Use this to create index of notes
+    private async Task<FaissNet.Index> LoadOrCreateStringIndexAsync(string filename, IDictionary<int, string> data)
+    {
+        if (File.Exists(filename))
+        {
+            var result = FaissNet.Index.Load(filename);
+            Console.WriteLine($"Loaded index with {result.Count} entries");
+            return result;
+        }
+
+        var index = FaissNet.Index.Create(EmbeddingDimension, "IDMap2,Flat", FaissNet.MetricType.METRIC_INNER_PRODUCT);
+
+        // Build an index
+        foreach (var issuesChunk in data.Chunk(1000))
+        {
+            Console.Write($"Embedding issues: {issuesChunk.First().Key} - {issuesChunk.Last().Key}");
+            var embeddings = await EmbeddingGenerator.GenerateAsync(issuesChunk.Select(i => i.Value));
+            Console.WriteLine(" Inserting into index...");
+            index.AddWithIds(
+                embeddings.Select(e => e.Vector.ToArray()).ToArray(),
+                issuesChunk.Select(i => (long)i.Key).ToArray());
+        }
+
+        index.Save(filename);
+        return index;
+    }
 }
 
 // Things to explore:
